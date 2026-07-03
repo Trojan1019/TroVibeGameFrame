@@ -36,6 +36,24 @@ export const DragScrollArea = React.forwardRef<HTMLDivElement, DragScrollAreaPro
   const suppressClickRef = React.useRef(false);
   const [isDragging, setIsDragging] = React.useState(false);
 
+  const isInteractiveTarget = React.useCallback((target: EventTarget | null) => {
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        [
+          'button',
+          'a',
+          'input',
+          'textarea',
+          'select',
+          'label',
+          '[role="button"]',
+          '[data-drag-scroll-ignore="true"]',
+        ].join(','),
+      ),
+    );
+  }, []);
+
   const setRefs = React.useCallback(
     (node: HTMLDivElement | null) => {
       innerRef.current = node;
@@ -59,6 +77,7 @@ export const DragScrollArea = React.forwardRef<HTMLDivElement, DragScrollAreaPro
     onPointerDown?.(event);
     if (event.defaultPrevented || !innerRef.current) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (isInteractiveTarget(event.target)) return;
 
     dragStateRef.current = {
       active: true,
@@ -110,11 +129,21 @@ export const DragScrollArea = React.forwardRef<HTMLDivElement, DragScrollAreaPro
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     onPointerUp?.(event);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Ignore unsupported capture contexts.
+    }
     resetDrag();
   };
 
   const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
     onPointerCancel?.(event);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Ignore unsupported capture contexts.
+    }
     resetDrag();
   };
 

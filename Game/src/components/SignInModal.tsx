@@ -1,4 +1,6 @@
 import React from 'react';
+import { getGameConfig } from '../config/runtimeConfig';
+import { mapRewardKindToSignRewardType } from '../config/gameConfig';
 import { PlayerInfo } from '../types';
 import { CalendarCheck2, X } from 'lucide-react';
 import { DragScrollArea } from './shell/DragScrollArea';
@@ -39,63 +41,15 @@ export const SignInModal: React.FC<SignInModalProps> = ({
   // 过去的天、未签到 = 可补签
   const isMissed = (idx: number) => idx < activeDay && !playerInfo.signInDays[idx];
 
-  // Reward dataset for the sample shell
-  const signRewards: Array<{ day: number; label: string; rewards: Array<{ type: SignRewardType; count: number }> }> = [
-    { 
-      day: 1, 
-      label: '第 1 天', 
-      rewards: [
-        { type: 'gold', count: 100 }
-      ] 
-    },
-    { 
-      day: 2, 
-      label: '第 2 天', 
-      rewards: [
-        { type: 'diamond', count: 2 }
-      ] 
-    },
-    { 
-      day: 3, 
-      label: '第 3 天', 
-      rewards: [
-        { type: 'hint', count: 1 },
-        { type: 'gold', count: 50 }
-      ] 
-    },
-    { 
-      day: 4, 
-      label: '第 4 天', 
-      rewards: [
-        { type: 'gold', count: 200 }
-      ] 
-    },
-    { 
-      day: 5, 
-      label: '第 5 天', 
-      rewards: [
-        { type: 'shuffle', count: 1 },
-        { type: 'diamond', count: 1 }
-      ] 
-    },
-    { 
-      day: 6, 
-      label: '第 6 天', 
-      rewards: [
-        { type: 'diamond', count: 3 },
-        { type: 'gold', count: 100 }
-      ] 
-    },
-    { 
-      day: 7, 
-      label: '第 7 天', 
-      rewards: [
-        { type: 'chest', count: 1 },
-        { type: 'diamond', count: 5 },
-        { type: 'gold', count: 500 }
-      ] 
-    },
-  ];
+  const signRewards: Array<{ day: number; label: string; rewards: Array<{ type: SignRewardType; count: number }> }> =
+    getGameConfig().activities.signIn7d.map((item) => ({
+      day: item.day,
+      label: item.label,
+      rewards: item.rewards.map((reward) => ({
+        type: mapRewardKindToSignRewardType(reward.kind) as SignRewardType,
+        count: reward.count,
+      })),
+    }));
 
   return (
     <ShellModal>

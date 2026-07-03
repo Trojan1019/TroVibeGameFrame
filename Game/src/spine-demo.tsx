@@ -1,10 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { useMemo, useState } from 'react';
 import { SpinePlayerView } from './components/spine/SpinePlayerView';
+import { getGameConfig, loadRuntimeGameConfig } from './config/runtimeConfig';
 import './index.css';
-
-const DEFAULT_SKELETON = 'https://esotericsoftware.com/files/examples/4.3/spineboy/export/spineboy-pro.json';
-const DEFAULT_ATLAS = 'https://esotericsoftware.com/files/examples/4.3/spineboy/export/spineboy-pma.atlas';
 
 function readSearchParam(name: string) {
   return new URLSearchParams(window.location.search).get(name)?.trim() || '';
@@ -25,8 +23,9 @@ function readNumberParam(name: string) {
 
 function SpineDemoPage() {
   const config = useMemo(() => {
-    const skeleton = readSearchParam('skeleton') || DEFAULT_SKELETON;
-    const atlas = readSearchParam('atlas') || DEFAULT_ATLAS;
+    const defaultPreset = getGameConfig().spine.presets[0];
+    const skeleton = readSearchParam('skeleton') || defaultPreset?.skeleton || '';
+    const atlas = readSearchParam('atlas') || defaultPreset?.atlas || '';
     const animation = readSearchParam('animation') || undefined;
     const skin = readSearchParam('skin') || undefined;
     const scale = readNumberParam('scale');
@@ -113,4 +112,9 @@ function SpineDemoPage() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(<SpineDemoPage />);
+async function bootstrap() {
+  await loadRuntimeGameConfig();
+  createRoot(document.getElementById('root')!).render(<SpineDemoPage />);
+}
+
+bootstrap();

@@ -13,6 +13,8 @@ import { RewardFlightProvider } from './components/flight/RewardFlightProvider';
 import { ProfileModal } from './components/ProfileModal';
 import { ShopModal } from './components/ShopModal';
 import { PreviewViewport } from './components/dev/PreviewViewport';
+import { getGameConfig } from './config/runtimeConfig';
+import { mapRewardKindToItemType, type ConfigRewardGrant } from './config/gameConfig';
 import { PlayerInfo, ItemInventory, MailMessage, DailyTask, LeaderboardEntry, ItemType, ModalType } from './types';
 import { activeGame, type ActiveGameSnapshot, type ActiveMissionEvent } from './games/registry';
 import {
@@ -191,34 +193,70 @@ const DEFAULT_PLAYER_INFO: PlayerInfo = {
   lastSignInDate: null, claimedToday: false,
 };
 const DEFAULT_INVENTORY: ItemInventory = { undo: 3, shuffle: 1, hint: 5, upgrade: 2 };
-const DEFAULT_MAILS = (): MailMessage[] => [
-  { id: 'msg_welcome', title: '欢迎使用', content: '这是一个可继续扩展的游戏流程壳，已预置示例资源与账户状态。', coins: 100, diamonds: 2, isRead: false, isClaimed: false, time: '2026-05-22 09:08' },
-  { id: 'msg_daily', title: '每日资源', content: '每日示例奖励已发放。', coins: 200, diamonds: 0, items: [{ type: 'hint', count: 1 }], isRead: false, isClaimed: false, time: '2026-05-22 09:08' },
-  { id: 'msg_gift', title: '测试礼包', content: '感谢你完成上一轮流程验证。', coins: 300, diamonds: 3, isRead: true, isClaimed: true, time: '2026-05-21 14:30' },
-];
-const DEFAULT_TASKS = (): DailyTask[] => [
-  { id: '2048_merge_128',       title: '达成 128 里程碑',   description: '在当前示例局面中产出一个 128 格', category: 'merge_tile',   target: 128,  current: 0, coins: 80,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_merge_512',       title: '达成 512 里程碑',   description: '在当前示例局面中产出一个 512 格', category: 'merge_tile',   target: 512,  current: 0, coins: 180, diamonds: 0, items: [{ type: 'hint', count: 1 }],    isClaimed: false, isLocked: false },
-  { id: '2048_merge_2048',      title: '达成主目标',       description: '将当前示例局面推进到目标上限',   category: 'merge_tile',   target: 2048, current: 0, coins: 0,   diamonds: 3, items: [{ type: 'upgrade', count: 1 }], isClaimed: false, isLocked: false },
-  { id: '2048_score_500',       title: '单局 500 分',      description: '在一局内累计达到 500 分',      category: 'score_single', target: 500,  current: 0, coins: 80,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_score_2000',      title: '单局 2000 分',     description: '在一局内累计达到 2000 分',     category: 'score_single', target: 2000, current: 0, coins: 180, diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_score_8000',      title: '单局 8000 分',     description: '在一局内累计达到 8000 分',     category: 'score_single', target: 8000, current: 0, coins: 0,   diamonds: 2, items: [{ type: 'shuffle', count: 1 }], isClaimed: false, isLocked: false },
-  { id: '2048_finish_1',        title: '完成 1 次示例',    description: '完成任意 1 局流程',           category: 'games_played', target: 1,    current: 0, coins: 60,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_finish_3',        title: '完成 3 次示例',    description: '累计完成 3 局流程',           category: 'games_played', target: 3,    current: 0, coins: 160, diamonds: 0, items: [{ type: 'undo', count: 1 }],    isClaimed: false, isLocked: false },
-  { id: '2048_finish_5',        title: '完成 5 次示例',    description: '累计完成 5 局流程',           category: 'games_played', target: 5,    current: 0, coins: 300, diamonds: 2, isClaimed: false, isLocked: false },
-  { id: '2048_move_50',         title: '完成 50 次操作',   description: '单局累计完成 50 次有效操作',   category: 'move_count',   target: 50,   current: 0, coins: 70,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_move_150',        title: '完成 150 次操作',  description: '单局累计完成 150 次有效操作',  category: 'move_count',   target: 150,  current: 0, coins: 160, diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_move_300',        title: '完成 300 次操作',  description: '单局累计完成 300 次有效操作',  category: 'move_count',   target: 300,  current: 0, coins: 0,   diamonds: 2, items: [{ type: 'hint', count: 1 }],    isClaimed: false, isLocked: false },
-  { id: '2048_item_1',          title: '使用 1 个道具',    description: '使用任意道具 1 次',           category: 'use_item',     target: 1,    current: 0, coins: 80,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_item_3',          title: '使用 3 个道具',    description: '累计使用道具 3 次',           category: 'use_item',     target: 3,    current: 0, coins: 180, diamonds: 0, items: [{ type: 'hint', count: 1 }],    isClaimed: false, isLocked: false },
-  { id: '2048_item_5',          title: '使用 5 个道具',    description: '累计使用道具 5 次',           category: 'use_item',     target: 5,    current: 0, coins: 0,   diamonds: 2, items: [{ type: 'upgrade', count: 1 }], isClaimed: false, isLocked: false },
-  { id: '2048_rank_submit_1',   title: '上报 1 次成绩',    description: '向排行榜同步一次成绩',        category: 'rank_submit',  target: 1,    current: 0, coins: 100, diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_rank_score_2000', title: '上报 2000 分成绩', description: '上报一次 2000 分以上的成绩',  category: 'rank_submit',  target: 2000, current: 0, coins: 220, diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_rank_score_8000', title: '上报 8000 分成绩', description: '上报一次 8000 分以上的成绩',  category: 'rank_submit',  target: 8000, current: 0, coins: 0,   diamonds: 3, isClaimed: false, isLocked: false },
-  { id: '2048_exchange_1',      title: '完成 1 次购买',    description: '在商店中完成 1 次道具购买',    category: 'exchange', target: 1,    current: 0, coins: 60,  diamonds: 0, isClaimed: false, isLocked: false },
-  { id: '2048_exchange_500',    title: '累计消费 500 金币', description: '累计完成 500 金币的道具支出',  category: 'exchange', target: 500,  current: 0, coins: 0,   diamonds: 0, items: [{ type: 'shuffle', count: 1 }], isClaimed: false, isLocked: false },
-  { id: '2048_exchange_1500',   title: '累计消费 1500 金币', description: '累计完成 1500 金币的道具支出', category: 'exchange', target: 1500, current: 0, coins: 0,   diamonds: 2, isClaimed: false, isLocked: false },
-];
+function summarizeConfigRewards(rewards: ConfigRewardGrant[]) {
+  let coins = 0;
+  let diamonds = 0;
+  const items: { type: ItemType; count: number }[] = [];
+  for (const reward of rewards) {
+    if (reward.kind === 'coins') {
+      coins += reward.count;
+      continue;
+    }
+    if (reward.kind === 'diamonds') {
+      diamonds += reward.count;
+      continue;
+    }
+    const itemType = mapRewardKindToItemType(reward.kind);
+    if (itemType) items.push({ type: itemType, count: reward.count });
+  }
+  return { coins, diamonds, items };
+}
+
+const DEFAULT_MAILS = (): MailMessage[] => {
+  const fallbackSeeds = getGameConfig().mail.fallbackSeeds;
+  const mapped = fallbackSeeds.map((seed, index) => {
+    const summary = summarizeConfigRewards(seed.rewards);
+    return {
+      id: seed.id,
+      title: seed.title,
+      content: seed.content,
+      coins: summary.coins,
+      diamonds: summary.diamonds,
+      items: summary.items.length > 0 ? summary.items : undefined,
+      isRead: false,
+      isClaimed: false,
+      time: `2026-05-22 09:0${Math.min(index + 1, 9)}`,
+    };
+  });
+
+  return mapped.length > 0 ? mapped : [
+    { id: 'msg_welcome', title: '欢迎使用', content: '这是一个可继续扩展的游戏流程壳，已预置示例资源与账户状态。', coins: 100, diamonds: 2, isRead: false, isClaimed: false, time: '2026-05-22 09:08' },
+  ];
+};
+
+const DEFAULT_TASKS = (): DailyTask[] => {
+  const fallbackMissions = getGameConfig().missions.fallbackDaily;
+  const mapped = fallbackMissions.map((mission) => {
+    const summary = summarizeConfigRewards(mission.rewards);
+    return {
+      id: mission.id,
+      title: mission.title,
+      description: mission.description,
+      category: mission.category,
+      target: mission.target,
+      current: 0,
+      coins: summary.coins,
+      diamonds: summary.diamonds,
+      items: summary.items.length > 0 ? summary.items : undefined,
+      isClaimed: false,
+      isLocked: false,
+    };
+  });
+
+  return mapped.length > 0 ? mapped : [
+    { id: '2048_merge_128', title: '达成 128 里程碑', description: '在当前示例局面中产出一个 128 格', category: 'merge_tile', target: 128, current: 0, coins: 80, diamonds: 0, isClaimed: false, isLocked: false },
+  ];
+};
 const DEFAULT_LEADERBOARD = (): LeaderboardEntry[] => [
   { rank: 1, nickname: '狐狸阿皮', score: 12800, avatarId: 'fox' },
   { rank: 2, nickname: '小熊墩墩', score: 9600, avatarId: 'bear' },
@@ -1050,24 +1088,18 @@ export default function App() {
     // local fallback
     const currentIdx = playerInfo.signInDays.findIndex(c => !c);
     if (currentIdx === -1) return;
-    const signRewardConfigs = [
-      [{ type: 'gold', count: 100 }], [{ type: 'diamond', count: 2 }],
-      [{ type: 'hint', count: 1 }, { type: 'gold', count: 50 }], [{ type: 'gold', count: 200 }],
-      [{ type: 'shuffle', count: 1 }, { type: 'diamond', count: 1 }],
-      [{ type: 'diamond', count: 3 }, { type: 'gold', count: 100 }],
-      [{ type: 'chest', count: 1 }, { type: 'diamond', count: 5 }, { type: 'gold', count: 500 }],
-    ];
+    const signRewardConfigs = getGameConfig().activities.signIn7d.map((item) => item.rewards);
     let extraCoins = 0, extraDiamonds = 0;
     const itemGrants: Record<ItemType, number> = { undo: 0, shuffle: 0, hint: 0, upgrade: 0 };
     for (const reward of signRewardConfigs[currentIdx]) {
-      if (reward.type === 'gold') extraCoins += reward.count;
-      else if (reward.type === 'diamond') extraDiamonds += reward.count;
-      else if (reward.type === 'chest') {
+      if (reward.kind === 'coins') extraCoins += reward.count;
+      else if (reward.kind === 'diamonds') extraDiamonds += reward.count;
+      else if (reward.kind === 'chest') {
         itemGrants.upgrade += 2;
         itemGrants.shuffle += 1;
       } else {
-        const t = reward.type as ItemType;
-        itemGrants[t] += reward.count;
+        const t = mapRewardKindToItemType(reward.kind);
+        if (t) itemGrants[t] += reward.count;
       }
     }
     const itemsToShow: RewardItemGrant[] = (Object.keys(itemGrants) as ItemType[])

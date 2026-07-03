@@ -1,4 +1,5 @@
 import { Game2048ModuleView } from '../components/Game2048ModuleView';
+import { getGameConfig } from '../config/runtimeConfig';
 import type { Tile } from '../types';
 import { game2048Module, getBoardBestTile, getBestMoveSuggestion, type Game2048Snapshot, type Game2048State, type MoveDirection } from './game2048/module';
 import {
@@ -22,11 +23,15 @@ export type ActiveMissionEvent = MissionEvent;
 export const activeGame = {
   id: 'game-2048',
   displayName: 'number-merge-sample',
-  missionGroupCode: 'main_daily',
+  get missionGroupCode() {
+    return getGameConfig().gameplay.missionGroupCode;
+  },
   saveSnapshotKey: '2048_saved_game_snapshotv1',
   legacyBoardKey: '2048_saved_board_statev2',
   legacyHistoryKey: '2048_game_history',
-  winThreshold: 2048,
+  get winThreshold() {
+    return getGameConfig().gameplay.winThreshold;
+  },
   module: game2048Module,
   view: Game2048ModuleView,
   getBoardBestTile,

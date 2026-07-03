@@ -7,7 +7,11 @@ import React, {
   useState,
 } from 'react';
 
-import { GameResourceIcon, type GameResourceKind } from '../shell/GameResourceIcon';
+import {
+  GameResourceIcon,
+  getGameResourceLabel,
+  type GameResourceKind,
+} from '../shell/GameResourceIcon';
 
 type FlightPoint = { x: number; y: number };
 type FlightSourceTarget = HTMLElement | DOMRect | FlightPoint | null;
@@ -72,6 +76,7 @@ interface RewardFlightSprite {
 
 interface RewardFlightGroupRecord {
   targetEl: HTMLElement | null;
+  targetId: RewardFlightTargetId | null;
   total: number;
   completed: number;
   firstHitTriggered: boolean;
@@ -100,12 +105,12 @@ export const DEFAULT_REWARD_FLIGHT_CONFIG: RewardFlightConfig = {
   popScale: 1.12,
   endScale: 0.7,
   defaultIconSize: {
-    width: 100,
-    height: 100,
+    width: 30,
+    height: 30,
   },
   propIconSize: {
-    width: 120,
-    height: 150,
+    width: 30,
+    height: 30,
   },
 };
 
@@ -177,6 +182,12 @@ function getElementFromTarget(
   return targetMap.get(target as RewardFlightTargetId) ?? null;
 }
 
+function hasActiveTargetCounts(
+  counts: Partial<Record<RewardFlightTargetId, number>>,
+) {
+  return Object.values(counts).some((count) => (count ?? 0) > 0);
+}
+
 function easeOutBack(t: number) {
   const overshoot = 1.70158;
   const shifted = t - 1;
@@ -226,6 +237,167 @@ function playTargetHitFeedback(target: HTMLElement | null) {
     },
   );
 }
+
+function getTargetIdFromLaunchTarget(
+  target: RewardFlightLaunchOptions['target'],
+): RewardFlightTargetId | null {
+  if (!target || typeof target !== 'string') return null;
+  return target;
+}
+
+function getTargetMirrorKind(targetId: RewardFlightTargetId): GameResourceKind {
+  if (targetId === 'wallet-coins') return 'coins';
+  if (targetId === 'wallet-diamonds') return 'diamonds';
+  if (targetId === 'inventory-bag') return 'chest';
+  if (targetId === 'tool-undo') return 'undo';
+  if (targetId === 'tool-shuffle') return 'shuffle';
+  if (targetId === 'tool-hint') return 'hint';
+  return 'upgrade';
+}
+
+function getTargetMirrorLabel(targetId: RewardFlightTargetId) {
+  if (targetId === 'wallet-coins') return '金币';
+  if (targetId === 'wallet-diamonds') return '宝石';
+  if (targetId === 'inventory-bag') return '背包';
+  return getGameResourceLabel(getTargetMirrorKind(targetId));
+}
+
+function getTargetMirrorValue(targetId: RewardFlightTargetId, element: HTMLElement) {
+  if (targetId !== 'wallet-coins' && targetId !== 'wallet-diamonds') return null;
+  const rawText = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  const match = rawText.match(/[0-9][0-9,]*|···/);
+  return match?.[0] ?? null;
+}
+
+function getTargetMirrorFrameSize(
+  targetId: RewardFlightTargetId,
+  targetEl: HTMLElement | null,
+) {
+  if (targetId === 'wallet-coins' || targetId === 'wallet-diamonds') {
+    const value = targetEl ? getTargetMirrorValue(targetId, targetEl) : null;
+    const contentWidth = 76 + Math.max(value?.length ?? 0, 2) * 10;
+    return {
+      width: clamp(contentWidth, 112, 156),
+      height: 38,
+    };
+  }
+
+  return {
+    width: 72,
+    height: 34,
+  };
+}
+
+function buildTargetMirrorFrames(
+  orderedTargetIds: RewardFlightTargetId[],
+  overlayRect: DOMRect,
+  targetMap: Map<RewardFlightTargetId, HTMLElement>,
+) {
+  const leftInset = 18;
+  const topInset = 18;
+  const gap = 10;
+  const rowGap = 10;
+  const maxRowWidth = Math.max(overlayRect.width - leftInset * 2, 140);
+  const frames = new Map<
+    RewardFlightTargetId,
+    { left: number; top: number; width: number; height: number }
+  >();
+
+  let cursorX = leftInset;
+  let cursorY = topInset;
+  let rowHeight = 0;
+
+  orderedTargetIds.forEach((targetId) => {
+    const size = getTargetMirrorFrameSize(targetId, targetMap.get(targetId) ?? null);
+
+    if (cursorX > leftInset && cursorX + size.width > leftInset + maxRowWidth) {
+      cursorX = leftInset;
+      cursorY += rowHeight + rowGap;
+      rowHeight = 0;
+    }
+
+    frames.set(targetId, {
+      left: cursorX,
+      top: cursorY,
+      width: size.width,
+      height: size.height,
+    });
+
+    cursorX += size.width + gap;
+    rowHeight = Math.max(rowHeight, size.height);
+  });
+
+  return frames;
+}
+
+const RewardFlightTargetMirror: React.FC<{
+  targetId: RewardFlightTargetId;
+  targetEl: HTMLElement | null;
+  frame: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
+  pulsing: boolean;
+}> = ({ targetId, targetEl, frame, pulsing }) => {
+  const kind = getTargetMirrorKind(targetId);
+  const label = getTargetMirrorLabel(targetId);
+  const value = targetEl ? getTargetMirrorValue(targetId, targetEl) : null;
+  const isWallet = targetId === 'wallet-coins' || targetId === 'wallet-diamonds';
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        left: frame.left,
+        top: frame.top,
+        width: frame.width,
+        height: frame.height,
+      }}
+    >
+      <div
+        className={`flex h-full w-full items-center rounded-full border border-[rgba(83,101,122,0.16)] bg-[rgba(255,255,255,0.98)] text-[var(--shell-ink)] shadow-[0_12px_28px_rgba(38,54,72,0.18)] ${
+          isWallet ? 'gap-1.5 px-2.5 py-1.5' : 'justify-center gap-1.5 px-2'
+        } ${pulsing ? 'reward-flight-target-pulse' : ''}`}
+      >
+        <span
+          className={`flex shrink-0 items-center justify-center rounded-full ${
+            targetId === 'wallet-diamonds'
+              ? 'bg-[#fff0f7]'
+              : targetId === 'inventory-bag'
+                ? 'bg-[#f2f5fb]'
+                : targetId === 'tool-shuffle'
+                  ? 'bg-[#eff8f1]'
+                  : targetId === 'tool-hint'
+                    ? 'bg-[#fff7e8]'
+                    : targetId === 'tool-upgrade'
+                      ? 'bg-[#fff0ef]'
+                      : 'bg-[#eef6ff]'
+          }`}
+          style={{
+            width: isWallet ? Math.min(frame.height - 8, 24) : 22,
+            height: isWallet ? Math.min(frame.height - 8, 24) : 22,
+          }}
+        >
+          <GameResourceIcon kind={kind} size={isWallet ? 14 : 13} framed={false} />
+        </span>
+        {isWallet ? (
+          <>
+            <span className="min-w-0 truncate text-[12px] font-black text-[var(--shell-ink)]">
+              {value ?? label}
+            </span>
+            <span className="rounded-full bg-[rgba(92,141,246,0.12)] px-2 py-0.5 text-[9px] font-black text-[var(--shell-accent)]">
+              {label}
+            </span>
+          </>
+        ) : (
+          <span className="truncate text-[10px] font-black text-[var(--shell-ink)]">{label}</span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const RewardFlightSpriteNode: React.FC<{
   sprite: RewardFlightSprite;
@@ -363,7 +535,24 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const targetMapRef = useRef(new Map<RewardFlightTargetId, HTMLElement>());
   const groupMapRef = useRef(new Map<string, RewardFlightGroupRecord>());
+  const pulseTimersRef = useRef<number[]>([]);
+  const activeTargetCountsRef = useRef<Partial<Record<RewardFlightTargetId, number>>>({});
+  const activeTargetOrderRef = useRef<RewardFlightTargetId[]>([]);
   const [sprites, setSprites] = useState<RewardFlightSprite[]>([]);
+  const [activeTargetCounts, setActiveTargetCounts] = useState<
+    Partial<Record<RewardFlightTargetId, number>>
+  >({});
+  const [activeTargetOrder, setActiveTargetOrder] = useState<RewardFlightTargetId[]>([]);
+  const [pulsingTargets, setPulsingTargets] = useState<
+    Partial<Record<RewardFlightTargetId, boolean>>
+  >({});
+
+  React.useEffect(() => {
+    return () => {
+      pulseTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      pulseTimersRef.current = [];
+    };
+  }, []);
 
   const registerFlightTarget = useCallback(
     (targetId: RewardFlightTargetId, element: HTMLElement | null) => {
@@ -380,11 +569,61 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
     return targetMapRef.current.get(targetId) ?? null;
   }, []);
 
+  const syncActiveTargetState = useCallback(() => {
+    setActiveTargetCounts({ ...activeTargetCountsRef.current });
+    setActiveTargetOrder([...activeTargetOrderRef.current]);
+  }, []);
+
+  const previewTargetOrder = useCallback((targetId: RewardFlightTargetId) => {
+    if (activeTargetOrderRef.current.includes(targetId)) {
+      return [...activeTargetOrderRef.current];
+    }
+
+    return [...activeTargetOrderRef.current, targetId];
+  }, []);
+
+  const activateTargetMirror = useCallback((targetId: RewardFlightTargetId) => {
+    activeTargetCountsRef.current = {
+      ...activeTargetCountsRef.current,
+      [targetId]: (activeTargetCountsRef.current[targetId] ?? 0) + 1,
+    };
+
+    if (!activeTargetOrderRef.current.includes(targetId)) {
+      activeTargetOrderRef.current = [...activeTargetOrderRef.current, targetId];
+    }
+
+    syncActiveTargetState();
+  }, [syncActiveTargetState]);
+
+  const deactivateTargetMirror = useCallback((targetId: RewardFlightTargetId) => {
+    const nextCounts = { ...activeTargetCountsRef.current };
+    const nextCount = (nextCounts[targetId] ?? 1) - 1;
+    if (nextCount <= 0) {
+      delete nextCounts[targetId];
+    } else {
+      nextCounts[targetId] = nextCount;
+    }
+    activeTargetCountsRef.current = nextCounts;
+
+    if (!hasActiveTargetCounts(nextCounts)) {
+      activeTargetOrderRef.current = [];
+    }
+
+    syncActiveTargetState();
+  }, [syncActiveTargetState]);
+
   const handleSpriteArrive = useCallback((groupId: string) => {
     const group = groupMapRef.current.get(groupId);
     if (!group || group.firstHitTriggered) return;
     group.firstHitTriggered = true;
     playTargetHitFeedback(group.targetEl);
+    if (group.targetId) {
+      setPulsingTargets((current) => ({ ...current, [group.targetId!]: true }));
+      const timer = window.setTimeout(() => {
+        setPulsingTargets((current) => ({ ...current, [group.targetId!]: false }));
+      }, 420);
+      pulseTimersRef.current.push(timer);
+    }
     group.onFirstHit?.();
   }, []);
 
@@ -399,8 +638,11 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
 
     group.onComplete?.();
     group.resolve();
+    if (group.targetId) {
+      deactivateTargetMirror(group.targetId);
+    }
     groupMapRef.current.delete(groupId);
-  }, []);
+  }, [deactivateTargetMirror]);
 
   const launchRewardFlightGroup = useCallback(
     (options: RewardFlightLaunchOptions) => {
@@ -427,8 +669,21 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
       const resolvedTarget =
         targetElement ??
         (typeof options.target === 'string' ? null : options.target);
+      const targetId = getTargetIdFromLaunchTarget(options.target);
+      const projectedOrder = targetId ? previewTargetOrder(targetId) : activeTargetOrderRef.current;
+      const projectedFrames = buildTargetMirrorFrames(
+        projectedOrder,
+        overlayRect,
+        targetMapRef.current,
+      );
       const startPos = getOverlayPoint(options.source, overlayRect);
-      const endCenter = getOverlayPoint(resolvedTarget, overlayRect);
+      const mirrorFrame = targetId ? projectedFrames.get(targetId) : null;
+      const endCenter = mirrorFrame
+        ? {
+            x: mirrorFrame.left + mirrorFrame.width / 2,
+            y: mirrorFrame.top + mirrorFrame.height / 2,
+          }
+        : getOverlayPoint(resolvedTarget, overlayRect);
 
       if (!startPos || !endCenter) {
         options.onFirstHit?.();
@@ -445,6 +700,9 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
       const groupId = `reward-flight-group-${now}-${Math.random().toString(36).slice(2, 8)}`;
 
       options.onLaunchAudio?.();
+      if (targetId) {
+        activateTargetMirror(targetId);
+      }
 
       const nextSprites: RewardFlightSprite[] = Array.from({ length: iconCount }, (_, index) => {
         const gatherOffset = randomPointInRadius(config.gatherScatterRadius);
@@ -480,6 +738,7 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
       const completionPromise = new Promise<void>((resolve) => {
         groupMapRef.current.set(groupId, {
           targetEl: targetElement,
+          targetId,
           total: nextSprites.length,
           completed: 0,
           firstHitTriggered: false,
@@ -492,7 +751,7 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
       setSprites((current) => [...current, ...nextSprites]);
       return completionPromise;
     },
-    [],
+    [activateTargetMirror, previewTargetOrder],
   );
 
   const contextValue = useMemo<RewardFlightContextValue>(
@@ -503,6 +762,14 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
     }),
     [getFlightTargetElement, launchRewardFlightGroup, registerFlightTarget],
   );
+
+  const overlayRect = overlayRef.current?.getBoundingClientRect() ?? null;
+  const activeTargetIds = activeTargetOrder.filter(
+    (targetId) => (activeTargetCounts[targetId] ?? 0) > 0,
+  );
+  const mirrorFrames = overlayRect
+    ? buildTargetMirrorFrames(activeTargetOrder, overlayRect, targetMapRef.current)
+    : null;
 
   return (
     <RewardFlightContext.Provider value={contextValue}>
@@ -519,6 +786,21 @@ export const RewardFlightProvider: React.FC<{ children: React.ReactNode }> = ({
             onComplete={handleSpriteComplete}
           />
         ))}
+        {overlayRect && mirrorFrames
+          ? activeTargetIds.map((targetId) => {
+              const frame = mirrorFrames.get(targetId);
+              if (!frame) return null;
+              return (
+                <RewardFlightTargetMirror
+                  key={targetId}
+                  targetId={targetId}
+                  targetEl={targetMapRef.current.get(targetId) ?? null}
+                  frame={frame}
+                  pulsing={Boolean(pulsingTargets[targetId])}
+                />
+              );
+            })
+          : null}
       </div>
     </RewardFlightContext.Provider>
   );

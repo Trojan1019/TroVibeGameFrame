@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:config": "node scripts/build-config-from-xlsx.mjs",
     "dev": "vite --port=3005 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
@@ -31,6 +32,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "xlsx": "^0.18.5"
   }
 }

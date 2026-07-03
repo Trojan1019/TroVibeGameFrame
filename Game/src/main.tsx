@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { loadRuntimeGameConfig } from './config/runtimeConfig';
 import './index.css';
 
 const BOOTSTRAP_LOG_KEY = '__scaffoldBootstrapLogs';
@@ -129,6 +130,8 @@ async function ensureScaffoldSDK(): Promise<boolean> {
 
 async function bootstrap() {
   appendBootstrapLog('bootstrap:start', {});
+  await loadRuntimeGameConfig();
+  appendBootstrapLog('config:loaded', {});
   await ensureScaffoldSDK();
   appendBootstrapLog('bootstrap:mount', {});
   createRoot(document.getElementById('root')!).render(
