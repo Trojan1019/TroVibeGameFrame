@@ -1,0 +1,6 @@
+{
+  "name": "2048 森林大冒险",
+  "description": "基于移动端高保真UI设计的卡通Q版2048大冒险，包含完整可玩的带有退回、洗牌、提示、升级道具的2048关卡以及每日任务、七日签到、背包和邮箱等交互模块。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

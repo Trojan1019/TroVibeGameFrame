@@ -1,0 +1,4 @@
+interface:
+  display_name: "Playable Game Demo"
+  short_description: "Plan, build, and iterate playable React/TypeScript game demos."
+  default_prompt: "$playable-game-demo 处理这个游戏 demo 需求\n\n需求：\n\n要求：\n如果是新建，先做 Pre-Brief Discovery、Game Design Brief 和 GameSpec，等我确认后再开发。\n如果是优化，先做 Current Demo Audit 和 Iteration Brief，等我确认后再改代码。"
