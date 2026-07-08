@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { DeveloperPanel } from './DeveloperPanel';
 
 type PreviewPreset = {
   id: string;
@@ -127,6 +128,7 @@ export function usePreviewViewport() {
 
 export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const previewEnabled = isPreviewFrameEnabled();
+  const developerPanelEnabled = Boolean(import.meta.env.DEV);
   const [selectedPresetId, setSelectedPresetId] = useState(() => {
     if (typeof window === 'undefined') {
       return DEFAULT_PRESET_ID;
@@ -220,6 +222,7 @@ export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ child
           >
             {children}
           </div>
+          {developerPanelEnabled ? <DeveloperPanel /> : null}
         </div>
       </PreviewViewportContext.Provider>
     );
@@ -329,6 +332,7 @@ export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ child
             </div>
           </div>
         </div>
+        {developerPanelEnabled ? <DeveloperPanel /> : null}
       </div>
     </div>
   );

@@ -1,9 +1,13 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
+import { createDevApkBridge } from './scripts/dev-apk-bridge';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, '');
+  Object.assign(process.env, env);
+
   return {
     build: {
       rollupOptions: {
@@ -13,7 +17,7 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), createDevApkBridge(__dirname)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
