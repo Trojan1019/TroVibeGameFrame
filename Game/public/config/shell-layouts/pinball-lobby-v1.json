@@ -1,0 +1,9 @@
+{
+  "id": "pinball-lobby-v1",
+  "displayName": "弹球 Lobby v1",
+  "lobby": {
+    "primaryEntries": ["tasks", "leaderboard", "shop", "bag"],
+    "floatingEntries": ["mail", "signin", "profile"],
+    "hiddenEntries": ["redeem"]
+  }
+}

@@ -64,8 +64,8 @@ export const SettlementScreen: React.FC<SettlementScreenProps> = ({
             <div className={`grid grid-cols-2 ${isCompact ? 'gap-2' : 'gap-3'}`}>
               <ShellStatCard label="本局分数" value={score} icon={<GameResourceIcon kind="coins" size={18} />} />
               <ShellStatCard label="历史最高" value={bestScore} icon={<Trophy className="h-5 w-5 text-[#4d9463] stroke-[2.2]" />} />
-              <ShellStatCard label="最大方块" value={bestTile} icon={<Star className="h-5 w-5 fill-[#ffe8a8] text-[#d49839] stroke-[2]" />} />
-              <ShellStatCard label="移动步数" value={moves} icon={<Footprints className="h-5 w-5 text-[#60758d] stroke-[2.3]" />} />
+              <ShellStatCard label="最高连击" value={bestTile} icon={<Star className="h-5 w-5 fill-[#ffe8a8] text-[#d49839] stroke-[2]" />} />
+              <ShellStatCard label="发射回合" value={moves} icon={<Footprints className="h-5 w-5 text-[#60758d] stroke-[2.3]" />} />
             </div>
           </ShellPanel>
         </div>

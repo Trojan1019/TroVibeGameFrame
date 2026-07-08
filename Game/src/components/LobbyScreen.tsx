@@ -202,11 +202,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           <div className={`flex flex-col items-center text-center ${titleTopClass}`}>
             <div ref={titleRef} className="relative max-w-full">
               <h1 className={`text-center font-black tracking-[0.03em] text-[var(--shell-ink)] ${titleSizeClass}`}>
-                MERGE LAB
+                弹球远征
               </h1>
             </div>
             <p ref={subtitleRef} className={`mt-3 ${subtitleWidth} text-center font-bold text-[var(--shell-ink-soft)] ${isCompact ? 'text-[12px] leading-snug' : 'text-[15px] leading-relaxed'}`}>
-              轻扫、合并、领奖励，用更清爽的流程壳验证这局示例
+              瞄准、发射、清波次，再把掉落资源喂给你的精灵小队
             </p>
           </div>
 
@@ -281,7 +281,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             className={isCompact ? 'min-h-12 text-[15px]' : 'min-h-[60px] text-[18px]'}
           >
             <Play size={isCompact ? 16 : 18} strokeWidth={2.8} />
-            <span>开始示例</span>
+            <span>开始远征</span>
           </ShellButton>
           <ShellButton
             onClick={() => onStartGame(false)}
@@ -293,7 +293,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             className={`${!hasSavedGame ? 'text-gray-400' : ''} ${isCompact ? 'min-h-11 text-[14px]' : 'min-h-[54px] text-[16px]'}`}
           >
             <Layers3 size={isCompact ? 15 : 17} strokeWidth={2.6} />
-            <span>继续进度</span>
+            <span>继续远征</span>
           </ShellButton>
         </ShellPanel>
       </div>

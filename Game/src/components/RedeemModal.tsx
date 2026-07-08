@@ -26,7 +26,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
     if (!cleanCode) return;
 
     if (cleanCode === 'SAMPLE') {
-      onRedeemReward({ coins: 1000, diamonds: 50, undo: 1, shuffle: 1, hint: 1, upgrade: 1, title: '示例全资源礼包' });
+      onRedeemReward({ coins: 1000, diamonds: 50, undo: 1, shuffle: 1, hint: 1, upgrade: 1, title: '远征全资源礼包' });
       setStatus('success');
       setMsg('成功兑换：金币 x1000、宝石 x50、全部道具 +1');
       setCode('');
@@ -56,7 +56,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
             </span>
             <div>
               <h2 className="text-[20px] font-black text-[var(--shell-ink)]">礼包兑换</h2>
-              <p className="text-[11px] font-bold text-[var(--shell-ink-soft)]">给当前示例进度发放测试资源</p>
+              <p className="text-[11px] font-bold text-[var(--shell-ink-soft)]">给当前远征进度发放测试资源</p>
             </div>
           </div>
           <button

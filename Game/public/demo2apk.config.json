@@ -1,0 +1,8 @@
+{
+  "appName": "TroVibe Game Test",
+  "packageName": "com.trovibe.game.test",
+  "versionCode": 1,
+  "versionName": "0.0.1",
+  "buildType": "debug",
+  "packageType": "apk"
+}

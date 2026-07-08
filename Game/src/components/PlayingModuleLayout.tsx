@@ -5,6 +5,7 @@ interface PlayingModuleLayoutProps {
   playfield: React.ReactNode;
   controls?: React.ReactNode;
   footerTools?: React.ReactNode;
+  layered?: boolean;
 }
 
 export const PlayingModuleLayout: React.FC<PlayingModuleLayoutProps> = ({
@@ -12,7 +13,28 @@ export const PlayingModuleLayout: React.FC<PlayingModuleLayoutProps> = ({
   playfield,
   controls,
   footerTools,
+  layered = false,
 }) => {
+  if (layered) {
+    return (
+      <div className="relative flex h-full min-h-0 flex-col">
+        {statusBanner ? (
+          <div className="pointer-events-none absolute inset-x-0 top-2 z-40 flex justify-center px-4 text-center select-none">
+            {statusBanner}
+          </div>
+        ) : null}
+
+        <div className="relative flex min-h-0 flex-1 items-center justify-center py-2">
+          <div className="relative z-10">
+            {playfield}
+            {controls ? <div className="pointer-events-none absolute inset-0 z-20">{controls}</div> : null}
+            {footerTools ? <div className="pointer-events-none absolute inset-0 z-30">{footerTools}</div> : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {statusBanner ? (

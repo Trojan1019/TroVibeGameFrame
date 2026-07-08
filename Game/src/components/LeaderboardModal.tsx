@@ -37,8 +37,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               <Trophy className="h-4.5 w-4.5 stroke-[2.3]" />
             </span>
             <div>
-              <h2 className="text-[20px] font-black text-[var(--shell-ink)]">示例排行</h2>
-              <p className="text-[11px] font-bold text-[var(--shell-ink-soft)]">只保留成绩信息和玩家位置</p>
+              <h2 className="text-[20px] font-black text-[var(--shell-ink)]">远征排行</h2>
+              <p className="text-[11px] font-bold text-[var(--shell-ink-soft)]">按当前远征分数展示玩家位置</p>
             </div>
           </div>
           <button

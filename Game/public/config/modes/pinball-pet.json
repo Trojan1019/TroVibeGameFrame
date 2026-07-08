@@ -1,0 +1,22 @@
+{
+  "id": "pinball-pet",
+  "displayName": "弹球精灵远征",
+  "gameplay": {
+    "winThreshold": 6,
+    "missionGroupCode": "main_daily"
+  },
+  "defaultSpinePresetKey": "lobbyGuide",
+  "supportedEvents": [
+    "round_started",
+    "round_finished",
+    "score_reached",
+    "combo_reached",
+    "item_used",
+    "currency_spent",
+    "rank_submitted"
+  ],
+  "quickActions": {
+    "winLabel": "远征胜利",
+    "loseLabel": "远征失败"
+  }
+}

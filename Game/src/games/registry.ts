@@ -1,7 +1,12 @@
-import { Game2048ModuleView } from '../components/Game2048ModuleView';
+import { PinballPetModuleView } from '../components/PinballPetModuleView';
 import { getGameConfig } from '../config/runtimeConfig';
-import type { Tile } from '../types';
-import { game2048Module, getBoardBestTile, getBestMoveSuggestion, type Game2048Snapshot, type Game2048State, type MoveDirection } from './game2048/module';
+import type { RoundOutcome } from '../framework/gameModule';
+import {
+  getBestLaunchAngle,
+  pinballPetModule,
+  type PinballPetSnapshot,
+  type PinballPetState,
+} from './pinballPet/module';
 import {
   buildMissionReport as buildBaseMissionReport,
   createGameFinishedEvent,
@@ -15,55 +20,60 @@ import {
   type MissionSlot,
 } from '../scaffold/missions2048';
 
-export type ActiveGameSnapshot = Game2048Snapshot;
-export type ActiveGameState = Game2048State;
-export type ActiveGameMoveDirection = MoveDirection;
+export type ActiveGameSnapshot = PinballPetSnapshot;
+export type ActiveGameState = PinballPetState;
 export type ActiveMissionEvent = MissionEvent;
 
+function isPinballSnapshot(snapshot: unknown): snapshot is ActiveGameSnapshot {
+  if (!snapshot || typeof snapshot !== 'object') return false;
+  const candidate = snapshot as Partial<ActiveGameSnapshot>;
+  return (
+    typeof candidate.stageId === 'string' &&
+    typeof candidate.wave === 'number' &&
+    typeof candidate.roundIndex === 'number' &&
+    typeof candidate.score === 'number' &&
+    typeof candidate.bestCombo === 'number' &&
+    typeof candidate.status === 'string' &&
+    Array.isArray(candidate.enemies) &&
+    Array.isArray(candidate.pickups)
+  );
+}
+
 export const activeGame = {
-  id: 'game-2048',
-  displayName: 'number-merge-sample',
+  id: 'pinball-pet',
+  displayName: 'pinball-pet-mvp',
   get missionGroupCode() {
     return getGameConfig().gameplay.missionGroupCode;
   },
-  saveSnapshotKey: '2048_saved_game_snapshotv1',
+  saveSnapshotKey: 'pinball_pet_saved_game_snapshot_v1',
   legacyBoardKey: '2048_saved_board_statev2',
   legacyHistoryKey: '2048_game_history',
-  get winThreshold() {
-    return getGameConfig().gameplay.winThreshold;
+  module: pinballPetModule,
+  view: PinballPetModuleView,
+  getBestLaunchAngle,
+  hasSavedSnapshot(snapshot: ActiveGameSnapshot | null) {
+    return Boolean(snapshot && isPinballSnapshot(snapshot) && snapshot.status === 'playing');
   },
-  module: game2048Module,
-  view: Game2048ModuleView,
-  getBoardBestTile,
-  getBestMoveSuggestion,
-  loadSnapshot(currentScore: number): ActiveGameSnapshot | null {
+  loadSnapshot(_currentScore: number): ActiveGameSnapshot | null {
     const snapshotLocal = localStorage.getItem(this.saveSnapshotKey);
     if (snapshotLocal) {
       try {
-        return JSON.parse(snapshotLocal) as ActiveGameSnapshot;
+        const parsed = JSON.parse(snapshotLocal) as unknown;
+        if (this.hasSavedSnapshot(parsed as ActiveGameSnapshot | null)) {
+          return parsed as ActiveGameSnapshot;
+        }
+        localStorage.removeItem(this.saveSnapshotKey);
       } catch {
         localStorage.removeItem(this.saveSnapshotKey);
       }
     }
 
-    const legacyBoard = localStorage.getItem(this.legacyBoardKey);
-    if (!legacyBoard) return null;
-
-    try {
-      const board = JSON.parse(legacyBoard) as Tile[] | null;
-      if (!board || board.length === 0) return null;
-      const history = JSON.parse(localStorage.getItem(this.legacyHistoryKey) || '[]');
-      return {
-        board,
-        score: currentScore,
-        history,
-      };
-    } catch {
-      return null;
-    }
+    localStorage.removeItem(this.legacyBoardKey);
+    localStorage.removeItem(this.legacyHistoryKey);
+    return null;
   },
   persistSnapshot(snapshot: ActiveGameSnapshot | null) {
-    if (snapshot) {
+    if (this.hasSavedSnapshot(snapshot)) {
       localStorage.setItem(this.saveSnapshotKey, JSON.stringify(snapshot));
     } else {
       localStorage.removeItem(this.saveSnapshotKey);
@@ -71,8 +81,8 @@ export const activeGame = {
     localStorage.removeItem(this.legacyBoardKey);
     localStorage.removeItem(this.legacyHistoryKey);
   },
-  resolveRoundOutcome(bestTile: number): 'won' | 'lost' {
-    return bestTile >= this.winThreshold ? 'won' : 'lost';
+  resolveRoundOutcome(status: RoundOutcome): 'won' | 'lost' {
+    return status === 'won' ? 'won' : 'lost';
   },
   missions: {
     normalizeCategory,

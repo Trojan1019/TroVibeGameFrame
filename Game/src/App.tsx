@@ -230,7 +230,7 @@ const DEFAULT_MAILS = (): MailMessage[] => {
   });
 
   return mapped.length > 0 ? mapped : [
-    { id: 'msg_welcome', title: '欢迎使用', content: '这是一个可继续扩展的游戏流程壳，已预置示例资源与账户状态。', coins: 100, diamonds: 2, isRead: false, isClaimed: false, time: '2026-05-22 09:08' },
+    { id: 'msg_welcome', title: '远征准备完成', content: '弹球小队已经集结，新的远征战场和初始补给已送达。', coins: 100, diamonds: 2, isRead: false, isClaimed: false, time: '2026-05-22 09:08' },
   ];
 };
 
@@ -254,7 +254,7 @@ const DEFAULT_TASKS = (): DailyTask[] => {
   });
 
   return mapped.length > 0 ? mapped : [
-    { id: '2048_merge_128', title: '达成 128 里程碑', description: '在当前示例局面中产出一个 128 格', category: 'merge_tile', target: 128, current: 0, coins: 80, diamonds: 0, isClaimed: false, isLocked: false },
+    { id: 'pinball_combo_8', title: '打出 8 连击', description: '单局内任意一次发射打出 8 连击', category: 'merge_tile', target: 8, current: 0, coins: 80, diamonds: 0, isClaimed: false, isLocked: false },
   ];
 };
 const DEFAULT_LEADERBOARD = (): LeaderboardEntry[] => [
@@ -293,14 +293,14 @@ function normalizeLoadedPlayerInfo(input: PlayerInfo): PlayerInfo {
 function normalizeLoadedMails(input: MailMessage[]): MailMessage[] {
   return input.map(mail => ({
     ...mail,
-    title: mail.title === '今日奖励' ? '每日资源' : mail.title === '挑战礼包' ? '测试礼包' : mail.title,
+    title: mail.title === '今日奖励' ? '每日补给' : mail.title === '挑战礼包' ? '出征礼包' : mail.title,
     content:
       mail.content === '亲爱的玩家，欢迎回到森林数字奇幻乐园！'
-        ? '这是一个可继续扩展的游戏流程壳，已预置示例资源与账户状态。'
+        ? '弹球小队已经集结，新的远征战场和初始补给已送达。'
         : mail.content === '每日登录奖励已送达！'
-          ? '每日示例奖励已发放。'
+          ? '每日补给已送达，记得提升精灵和弹球工具。'
           : mail.content === '感谢你完成上周的挑战！'
-            ? '感谢你完成上一轮流程验证。'
+            ? '感谢你完成上一轮远征验证。'
             : mail.content,
   }));
 }
@@ -376,7 +376,7 @@ export default function App() {
   const [savedGameSnapshot, setSavedGameSnapshot] = useState<ActiveGameSnapshot | null>(() => activeGame.loadSnapshot(playerInfo.score));
   const [claimedReward, setClaimedReward] = useState<ClaimedRewardState | null>(null);
   const [settlementSummary, setSettlementSummary] = useState<SettlementSummary | null>(null);
-  const hasSavedRound = !!savedGameSnapshot && savedGameSnapshot.board.length > 0;
+  const hasSavedRound = activeGame.hasSavedSnapshot(savedGameSnapshot);
   const [gameFlow, setGameFlow] = useState(() => createInitialGameFlow(hasSavedRound));
 
   // keep activeModal ref in sync for SDK event handlers
@@ -910,20 +910,19 @@ export default function App() {
     ));
   };
 
-  const handleGameOver = (score: number, bestTile: number, moves: number) => {
-    finalizeCurrentRoundRef.current({ score });
-    reportScoreRef.current(score, 'game_over');
-    roundMetricsRef.current.bestTile = bestTile;
-    roundMetricsRef.current.moves = moves;
-    setPlayerInfo(prev => ({ ...prev, score, highScore: Math.max(prev.highScore, score) }));
+  const handleGameOver = (summary: SettlementSummary) => {
+    finalizeCurrentRoundRef.current({ score: summary.score });
+    reportScoreRef.current(summary.score, 'game_over');
+    roundMetricsRef.current.bestTile = summary.bestTile;
+    roundMetricsRef.current.moves = summary.moves;
+    setPlayerInfo(prev => ({
+      ...prev,
+      score: summary.score,
+      highScore: Math.max(prev.highScore, summary.score),
+    }));
     setSavedGameSnapshot(null);
-    setSettlementSummary({
-      outcome: activeGame.resolveRoundOutcome(bestTile),
-      score,
-      bestTile,
-      moves,
-    });
-    setGameFlow(prev => finishRound(prev, activeGame.resolveRoundOutcome(bestTile)));
+    setSettlementSummary(summary);
+    setGameFlow(prev => finishRound(prev, summary.outcome));
   };
 
   // ── mail handlers ────────────────────────────────────────────────────────

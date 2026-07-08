@@ -1,0 +1,72 @@
+{
+  "id": "pinball-season-s1",
+  "displayName": "弹球远征 S1",
+  "spinePresets": [
+    {
+      "key": "lobbyGuide",
+      "label": "Lobby 引导角色",
+      "skeleton": "/spine/lobby-hostess/lobby-hostess.json",
+      "atlas": "/spine/lobby-hostess/lobby-hostess.atlas",
+      "animation": "idle",
+      "interactive": false,
+      "showControls": false
+    }
+  ],
+  "signIn7d": [
+    { "day": 1, "label": "第 1 天", "rewards": [{ "kind": "coins", "count": 100 }] },
+    { "day": 2, "label": "第 2 天", "rewards": [{ "kind": "diamonds", "count": 2 }] },
+    { "day": 3, "label": "第 3 天", "rewards": [{ "kind": "hint", "count": 1 }, { "kind": "coins", "count": 50 }] },
+    { "day": 4, "label": "第 4 天", "rewards": [{ "kind": "coins", "count": 200 }] },
+    { "day": 5, "label": "第 5 天", "rewards": [{ "kind": "shuffle", "count": 1 }, { "kind": "diamonds", "count": 1 }] },
+    { "day": 6, "label": "第 6 天", "rewards": [{ "kind": "diamonds", "count": 3 }, { "kind": "coins", "count": 100 }] },
+    { "day": 7, "label": "第 7 天", "rewards": [{ "kind": "chest", "count": 1 }, { "kind": "diamonds", "count": 5 }, { "kind": "coins", "count": 500 }] }
+  ],
+  "fallbackDaily": [
+    {
+      "id": "pinball_combo_8",
+      "title": "打出 8 连击",
+      "description": "单局内任意一次发射打出 8 连击",
+      "category": "combo_reached",
+      "target": 8,
+      "rewards": [{ "kind": "coins", "count": 80 }]
+    },
+    {
+      "id": "pinball_combo_15",
+      "title": "打出 15 连击",
+      "description": "单局内任意一次发射打出 15 连击",
+      "category": "combo_reached",
+      "target": 15,
+      "rewards": [{ "kind": "coins", "count": 180 }, { "kind": "hint", "count": 1 }]
+    },
+    {
+      "id": "pinball_finish_3",
+      "title": "完成 3 次远征",
+      "description": "累计完成 3 局弹球远征",
+      "category": "round_finished",
+      "target": 3,
+      "rewards": [{ "kind": "coins", "count": 160 }, { "kind": "undo", "count": 1 }]
+    },
+    {
+      "id": "pinball_exchange_1500",
+      "title": "累计消费 1500 金币",
+      "description": "累计完成 1500 金币的补给采购",
+      "category": "currency_spent",
+      "target": 1500,
+      "rewards": [{ "kind": "diamonds", "count": 2 }]
+    }
+  ],
+  "fallbackMailSeeds": [
+    {
+      "id": "msg_welcome",
+      "title": "远征准备完成",
+      "content": "弹球小队已经集结，新的远征战场和初始补给已送达。",
+      "rewards": [{ "kind": "coins", "count": 100 }, { "kind": "diamonds", "count": 2 }]
+    },
+    {
+      "id": "msg_daily",
+      "title": "每日补给",
+      "content": "今日补给箱已送达，记得补足预判和过载道具。",
+      "rewards": [{ "kind": "coins", "count": 200 }, { "kind": "hint", "count": 1 }]
+    }
+  ]
+}

@@ -66,7 +66,7 @@ export interface GameConfig {
 
 export const DEFAULT_GAME_CONFIG: GameConfig = {
   gameplay: {
-    winThreshold: 2048,
+    winThreshold: 6,
     missionGroupCode: 'main_daily',
   },
   spine: {
@@ -134,28 +134,28 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   missions: {
     fallbackDaily: [
       {
-        id: '2048_merge_128',
-        title: '达成 128 里程碑',
-        description: '在当前示例局面中产出一个 128 格',
+        id: 'pinball_combo_8',
+        title: '打出 8 连击',
+        description: '单局内任意一次发射打出 8 连击',
         category: 'merge_tile',
-        target: 128,
+        target: 8,
         rewards: [{ kind: 'coins', count: 80 }],
       },
       {
-        id: '2048_merge_512',
-        title: '达成 512 里程碑',
-        description: '在当前示例局面中产出一个 512 格',
+        id: 'pinball_combo_15',
+        title: '打出 15 连击',
+        description: '单局内任意一次发射打出 15 连击',
         category: 'merge_tile',
-        target: 512,
+        target: 15,
         rewards: [
           { kind: 'coins', count: 180 },
           { kind: 'hint', count: 1 },
         ],
       },
       {
-        id: '2048_finish_3',
-        title: '完成 3 次示例',
-        description: '累计完成 3 局流程',
+        id: 'pinball_finish_3',
+        title: '完成 3 次远征',
+        description: '累计完成 3 局弹球远征',
         category: 'games_played',
         target: 3,
         rewards: [
@@ -164,9 +164,9 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
         ],
       },
       {
-        id: '2048_exchange_1500',
+        id: 'pinball_exchange_1500',
         title: '累计消费 1500 金币',
-        description: '累计完成 1500 金币的道具支出',
+        description: '累计完成 1500 金币的补给采购',
         category: 'exchange',
         target: 1500,
         rewards: [{ kind: 'diamonds', count: 2 }],
@@ -177,8 +177,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     fallbackSeeds: [
       {
         id: 'msg_welcome',
-        title: '欢迎使用',
-        content: '这是一个可继续扩展的游戏流程壳，已预置示例资源与账户状态。',
+        title: '远征准备完成',
+        content: '弹球小队已经集结，新的远征战场和初始补给已送达。',
         rewards: [
           { kind: 'coins', count: 100 },
           { kind: 'diamonds', count: 2 },
@@ -186,8 +186,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
       },
       {
         id: 'msg_daily',
-        title: '每日资源',
-        content: '每日示例奖励已发放。',
+        title: '每日补给',
+        content: '今日补给箱已送达，记得补足预判和过载道具。',
         rewards: [
           { kind: 'coins', count: 200 },
           { kind: 'hint', count: 1 },

@@ -95,6 +95,15 @@ function readPresetFromUrl() {
   return PREVIEW_PRESETS.some((preset) => preset.id === presetId) ? presetId : null;
 }
 
+function isPreviewFrameEnabled() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const previewFlag = params.get('previewFrame');
+  if (previewFlag === '1' || previewFlag === 'true') return true;
+  if (previewFlag === '0' || previewFlag === 'false') return false;
+  return Boolean(import.meta.env.DEV);
+}
+
 function formatAspect(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const divisor = gcd(width, height);
@@ -117,6 +126,7 @@ export function usePreviewViewport() {
 }
 
 export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const previewEnabled = isPreviewFrameEnabled();
   const [selectedPresetId, setSelectedPresetId] = useState(() => {
     if (typeof window === 'undefined') {
       return DEFAULT_PRESET_ID;
@@ -154,7 +164,15 @@ export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ child
     return () => window.removeEventListener('ui-layout-check-updated', readLayoutCheck as EventListener);
   }, []);
 
-  const preset = findPreset(selectedPresetId);
+  const preset = previewEnabled
+    ? findPreset(selectedPresetId)
+    : {
+        id: 'device-live',
+        label: 'Device Live',
+        width: windowSize.width,
+        height: windowSize.height,
+        group: '常用机型' as const,
+      };
   const availableWidth = Math.max(windowSize.width - VIEWPORT_PADDING * 2 - 24, 240);
   const availableHeight = Math.max(windowSize.height - TOOLBAR_HEIGHT - VIEWPORT_PADDING * 2 - 24, 240);
   const scale = Math.min(availableWidth / preset.width, availableHeight / preset.height);
@@ -187,6 +205,25 @@ export const PreviewViewport: React.FC<{ children: React.ReactNode }> = ({ child
     visualHeight: VISUAL_REFERENCE.height,
     renderScale,
   };
+
+  if (!previewEnabled) {
+    return (
+      <PreviewViewportContext.Provider value={contextValue}>
+        <div className="relative h-screen w-full overflow-hidden bg-[linear-gradient(180deg,var(--shell-sky)_0%,var(--shell-field-light)_46%,var(--shell-field-dark)_100%)]">
+          <div
+            className="absolute left-0 top-0 origin-top-left"
+            style={{
+              width: logicalWidth,
+              height: logicalHeight,
+              transform: `scale(${canvasScale})`,
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      </PreviewViewportContext.Provider>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#2d2621]">
